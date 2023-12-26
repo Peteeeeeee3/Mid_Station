@@ -3,3 +3,6 @@
 
 # ignore All __pycache__ folders
 __pycache__/
+
+# ignore virtual environment folder
+venv/
