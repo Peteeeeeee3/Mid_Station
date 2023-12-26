@@ -1,2 +1,5 @@
+# ignore .DS_Store MAC hidden files
+.DS_Store
+
 # ignore All __pycache__ folders
 __pycache__/
