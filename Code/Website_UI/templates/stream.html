@@ -43,47 +43,45 @@
         <div class="col-md-5 bg-dark-subtle p-3 rounded">
           <div class="d-flex flex-column h-100">
             <div class="flex-grow-1">
-              <form method="POST" id="setting-form">
-                <div class="accordion" id="accordionSettings">
-                  {% for idx, setting in settings %}
-                    <div class="accordion-item">
-                      <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                          <div class="form-check form-switch">
-                              <input class="form-check-input setting-toggle" name="{{idx}}" type="checkbox" role="switch" {% if setting['active'] %} checked {% endif %}>
-                          </div>
+              <div class="accordion" id="accordionSettings">
+                {% for idx, setting in settings %}
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{idx}}" aria-expanded="true" aria-controls="collapseOne">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input setting-toggle" data-setting-idx="{{idx}}" type="checkbox" role="switch" {% if setting['active'] %} checked {% endif %}>
+                        </div>
 
-                          {{setting['name']}}
+                        {{setting['name']}}
 
-                          <a href="#" class="link-underline-opacity-0 ms-2 text-secondary"><i class="fa-solid fa-pen" data-bs-toggle="modal" data-bs-target="#settingModalEdit"></i></a>
-                        </button>
-                      </h2>
-        
-                      <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionSettings">
-                        <div class="accordion-body">
-                          
-                          <div class="row row-cols-auto justify-content-between">
-        
-                            <div class="col">
-                              {% for platform in setting['streamingPlatforms'] %}
-                                <h5 class="mb-3"><i class="fab fa-{{platform['platform'].lower()}} me-2"></i>{{platform['username']}} <a href="#" class="link-underline-opacity-0 ms-2 text-secondary"><i class="fa-solid fa-pen" data-bs-toggle="modal" data-bs-target="#channelModalEdit"></i></a></h5>
-                              {% endfor %}
-                            </div>
-        
-                            <div class="col">
-                              <div class="mb-3">
-                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#channelModal"><i class="fa fa-plus me-2"></i>Add Target</button>
-                              </div>
-                            </div>
-        
+                        <a href="#" class="link-underline-opacity-0 ms-2 text-secondary"><i class="fa-solid fa-pen" data-bs-toggle="modal" data-bs-target="#settingModalEdit"></i></a>
+                      </button>
+                    </h2>
+
+                    <div id="collapse{{idx}}" class="accordion-collapse collapse show" data-bs-parent="#accordionSettings">
+                      <div class="accordion-body">
+                        
+                        <div class="row row-cols-auto justify-content-between">
+      
+                          <div class="col">
+                            {% for platform in setting['streamingPlatforms'] %}
+                              <h5 class="mb-3"><i class="fab fa-{{platform['platform'].lower()}} me-2"></i>{{platform['username']}} <a href="#" class="link-underline-opacity-0 ms-2 text-secondary"><i class="fa-solid fa-pen" data-bs-toggle="modal" data-bs-target="#channelModalEdit"></i></a></h5>
+                            {% endfor %}
                           </div>
+      
+                          <div class="col">
+                            <div class="mb-3">
+                              <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#channelModal"><i class="fa fa-plus me-2"></i>Add Target</button>
+                            </div>
+                          </div>
+      
                         </div>
                       </div>
-        
                     </div>
-                  {% endfor %}
-                </div>
-              </form>
+      
+                  </div>
+                {% endfor %}
+              </div>
             </div>
 
             <div class="ms-auto flex-grow-0 flex-shrink-0">
@@ -162,18 +160,18 @@
             <div class="row mb-3">
               <label for="platform-select" class="mb-1">Platform</label>
               <div class="col">
-                <input type="radio" id="select-youtube" class="btn-check" name="options" autocomplete="off" checked>
-                <label class="btn btn-primary w-100 fs-4" for="select-youtube"><i class="fab fa-youtube"></i></label>
+                <input type="radio" id="select-youtube-edit" class="btn-check" name="options" autocomplete="off" checked>
+                <label class="btn btn-primary w-100 fs-4" for="select-youtube-edit"><i class="fab fa-youtube"></i></label>
               </div>
 
               <div class="col">
-                <input type="radio" id="select-twitch" class="btn-check" name="options" autocomplete="off">
-                <label class="btn btn-primary w-100 fs-4" for="select-twitch"><i class="fab fa-twitch"></i></label>
+                <input type="radio" id="select-twitch-edit" class="btn-check" name="options" autocomplete="off">
+                <label class="btn btn-primary w-100 fs-4" for="select-twitch-edit"><i class="fab fa-twitch"></i></label>
               </div>
 
               <div class="col">
-                <input type="radio" id="select-facebook" class="btn-check" name="options" autocomplete="off">
-                <label class="btn btn-primary w-100 fs-4" for="select-facebook"><i class="fab fa-facebook"></i></label>
+                <input type="radio" id="select-facebook-edit" class="btn-check" name="options" autocomplete="off">
+                <label class="btn btn-primary w-100 fs-4" for="select-facebook-edit"><i class="fab fa-facebook"></i></label>
               </div>
             </div>
 
@@ -200,18 +198,20 @@
             <h5 class="modal-title">Create Stream Setting</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            
-            <div class="mb-3">
-              <label for="stream-title" class="mb-1">Title</label>
-              <input id="stream-title" class="form-control mb-3" type="text" placeholder="Enter title here">
-            </div>
+          <form action="/new-setting" method="POST">
+            <div class="modal-body">
+              
+              <div class="mb-3">
+                <label for="stream-title" class="mb-1">Title</label>
+                <input id="stream-title" name="stream-title" class="form-control mb-3" type="text" placeholder="Enter title here">
+              </div>
 
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary">Add</button>
-          </div>
+            </div>
+            <div class="modal-footer">
+              <a type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</a>
+              <button type="submit" class="btn btn-primary setting-toggle">Add</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -224,19 +224,21 @@
             <h5 class="modal-title">Edit Stream Setting</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            
-            <div class="mb-3">
-              <label for="stream-title" class="mb-1">Title</label>
-              <input id="stream-title" class="form-control mb-3" type="text" placeholder="Enter title here">
-            </div>
+          <form action="/edit-setting" method="POST">
+            <div class="modal-body">
 
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-danger">Delete</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary">Save</button>
-          </div>
+              <div class="mb-3">
+                <label for="stream-title" class="mb-1">Title</label>
+                <input id="stream-title" name="stream-title" class="form-control mb-3" type="text" placeholder="Enter title here">
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger">Delete</button>
+              <a type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</a>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -248,15 +250,8 @@
       const settingForms = document.getElementById('setting-form')
       const settingToggles = document.getElementsByClassName('setting-toggle')
 
-      settingForms.preventDefault()
       function checkSubmission(e) {
-        const curToggle = e.target
-        for (let i = 0; i < settingToggles.length; i++) {
-          if (settingToggles[i] !== curToggle) {
-            settingToggles[i].checked = false
-          }
-        }
-        settingForms.submit()
+        window.location.href = '/stream/' + e.target.dataset.settingIdx
       }
 
       for (let i = 0; i < settingToggles.length; i++) {
