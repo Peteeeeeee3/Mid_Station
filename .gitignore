@@ -4,5 +4,7 @@
 # ignore All __pycache__ folders
 __pycache__/
 
-# ignore .idea folders
-.idea
+# ignore virtual environment folder
+venv/
+.venv/
+.idea/
