@@ -55,11 +55,11 @@ def editSetting():
     user = dict(db.User.find_one({"email": email}, {}))
 
     if request.method == "POST":
-        old_title = # add name of correct setting here
-        title = request.form['stream-title']
-        for setting in user['streamSetting']:
-            if setting['name'] == old_title:
-                setting['name'] = title
+        # old_title = # add name of correct setting here
+        # title = request.form['stream-title']
+        # for setting in user['streamSetting']:
+        #     if setting['name'] == old_title:
+        #         setting['name'] = title
         
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
     
