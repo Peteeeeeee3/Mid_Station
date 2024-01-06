@@ -1,12 +1,11 @@
 from flask import Flask, render_template as rt, request
-import pymongo, bson
+import pymongo, bson, os
 
-from ..Backend.PyRTMPServer import SetupServer
+from PyRTMPServer import SetupServer
 
 app = Flask(__name__)
 
-client = pymongo.MongoClient(
-    "mongodb+srv://PeterFarkas:tEiOltcXCGih8y7U@midstationdb0.8jpo7hd.mongodb.net/?retryWrites=true&w=majority")
+client = pymongo.MongoClient("mongodb+srv://PeterFarkas:tEiOltcXCGih8y7U@midstationdb0.8jpo7hd.mongodb.net/?retryWrites=true&w=majority")
 db = client['mid-station']
 user = dict(db.User.find_one({"email": "a.b@gmail.com"}, {}))
 email = user['email']
@@ -30,20 +29,6 @@ g_isLive = False
 def home():
     return rt('home.html', settings=enumerate(user['streamSetting']))
 
-
-@app.route('start_stream')
-def start_stream():
-    url = ""
-    user = dict(db.User.find_one({"email": email}, {}))
-    for setting in enumerate(user['streamSetting']):
-        if setting['active']:
-            for item in setting['streamingPlatforms']:
-                url = item['URL'] + item['streamKey']
-
-    server = SetupServer(url, "127.0.0.1")
-    server.GoLive()
-    global stopServer
-    stopServer = server.StopLive()
 
 @app.route('/stream', defaults={'settingIdx': None})
 @app.route('/stream/', defaults={'settingIdx': None})
@@ -103,6 +88,7 @@ def editSetting():
     
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
+
 @app.route('/new-target', methods=["GET", "POST"])
 def createTarget():
 
@@ -135,6 +121,7 @@ def createTarget():
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
 
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
 
 @app.route('/edit-target', methods=["GET", "POST"])
 def editTarget():
@@ -173,15 +160,33 @@ def editTarget():
 
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
+
+def start_stream():
+    url = ""
+    user = dict(db.User.find_one({"email": email}, {}))
+    for setting in enumerate(user['streamSetting']):
+        if setting['active']:
+            for item in setting['streamingPlatforms']:
+                url = item['URL'] + item['streamKey']
+
+    server = SetupServer(url, "127.0.0.1")
+    server.GoLive()
+    global stopServer
+    stopServer = server.StopLive()
+
+
 @app.route('/stream/live', methods=["GET", "POST"])
 def goLive():
     g_isLive = True
+    #start_stream()
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
 
 @app.route('/stream/offline', methods=["GET", "POST"])
 def goOffiine():
     g_isLive = False
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
 
 if __name__ == '__main__':
     app.run()
