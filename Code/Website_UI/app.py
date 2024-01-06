@@ -1,5 +1,5 @@
 from flask import Flask, render_template as rt, request
-import pymongo
+import pymongo, bson
 
 from ..Backend.PyRTMPServer import SetupServer
 
@@ -17,11 +17,18 @@ email = user['email']
 #TODO XAVIER
 #Create stop server callback
 
+# streaming platform URLs
+URL_YOUTUBE = "rtmp://a.rtmp.youtube.com/live2/"
+URL_TWITCH = "rtmp://live.twitch.tv/app/"
+URL_FACEBOOK = "rtmp://live-api-s.facebook.com:443/rtmp/"
+
+# global variable is stream live
+g_isLive = False
 
 @app.route('/')
 @app.route('/home')
 def home():
-    return rt('stream.html', settings=enumerate(user['streamSetting']))
+    return rt('home.html', settings=enumerate(user['streamSetting']))
 
 
 @app.route('start_stream')
@@ -39,6 +46,7 @@ def start_stream():
     stopServer = server.StopLive()
 
 @app.route('/stream', defaults={'settingIdx': None})
+@app.route('/stream/', defaults={'settingIdx': None})
 @app.route('/stream/<int:settingIdx>')
 def stream_page(settingIdx=None):
     # get users settings
@@ -60,8 +68,9 @@ def stream_page(settingIdx=None):
                     setting['active'] = True
 
         # update database
-        db.User.update_one({"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
-    return rt('stream.html', settings=enumerate(user['streamSetting']))
+        db.User.update_one( { "email": email }, {"$set": {"streamSetting": user['streamSetting']}})
+        
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 
 @app.route('/new-setting', methods=["GET", "POST"])
@@ -72,9 +81,10 @@ def createNewSetting():
     if request.method == "POST":
         title = request.form['stream-title']
         numSettings = len(user['streamSetting'])
-        user['streamSetting'].insert(numSettings, {'name': title, 'active': False})
-        db.User.update_one({"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
-    return rt('stream.html', settings=enumerate(user['streamSetting']))
+        user['streamSetting'].insert(numSettings, {'name': title, 'active': False, 'streamingPlatforms':[]})
+        db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
+
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 
 @app.route('/edit-setting', methods=["GET", "POST"])
@@ -83,16 +93,95 @@ def editSetting():
     user = dict(db.User.find_one({"email": email}, {}))
 
     if request.method == "POST":
-        # old_title = # add name of correct setting here
-        # title = request.form['stream-title']
-        # for setting in user['streamSetting']:
-        #     if setting['name'] == old_title:
-        #         setting['name'] = title
+        oldTitle = request.form['stream-title-old']
+        title = request.form['stream-title']
+        for setting in user['streamSetting']:
+            if setting['name'] == oldTitle:
+                setting['name'] = title
+        
+        db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
+    
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
-        db.User.update_one({"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
+@app.route('/new-target', methods=["GET", "POST"])
+def createTarget():
 
-    return rt('stream.html', settings=enumerate(user['streamSetting']))
+    # get user
+    user = dict(db.User.find_one({"email": email}, {}))
 
+    if request.method == "POST":
+        streamTitle = request.form['stream-title']
+        title = request.form['target-title']
+        platform = request.form['platform']
+        streamKey = request.form['stream-key']
+        url = ""
+
+        if platform == "YouTube":
+            url = URL_YOUTUBE
+        elif platform == "Twitch":
+            url = URL_TWITCH
+        elif platform == "Facebook":
+            url = URL_FACEBOOK
+
+        if url == "":
+            print("Error in URL")
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+        for setting in user['streamSetting']:
+            if setting['name'] == streamTitle:
+                numTargets = len(setting['streamingPlatforms'])
+                setting['streamingPlatforms'].insert(numTargets, {'_id': bson.ObjectId(), 'platform': platform, 'URL': url, 'streamKey': streamKey, 'title': title})
+
+        db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
+
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+@app.route('/edit-target', methods=["GET", "POST"])
+def editTarget():
+
+    # get user
+    user = dict(db.User.find_one({"email": email}, {}))
+
+    if request.method == "POST":
+        streamTitle = request.form['stream-title']
+        objectId = request.form['object-id']
+        title = request.form['target-title']
+        platform = request.form['platform']
+        streamKey = request.form['stream-key']
+        url = ""
+
+        if platform == "YouTube":
+            url = URL_YOUTUBE
+        elif platform == "Twitch":
+            url = URL_TWITCH
+        elif platform == "Facebook":
+            url = URL_FACEBOOK
+
+        if url == "":
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+        for setting in user['streamSetting']:
+            if setting['name'] == streamTitle:
+                for target in setting['streamingPlatforms']:
+                    if str(target['_id']) == objectId:
+                        target['platform'] = platform
+                        target['URL'] = url
+                        target['streamKey'] = streamKey
+                        target['title'] = title
+
+        db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
+
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+@app.route('/stream/live', methods=["GET", "POST"])
+def goLive():
+    g_isLive = True
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+@app.route('/stream/offline', methods=["GET", "POST"])
+def goOffiine():
+    g_isLive = False
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 if __name__ == '__main__':
     app.run()
