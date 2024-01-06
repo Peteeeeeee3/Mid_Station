@@ -13,6 +13,9 @@ URL_YOUTUBE = "rtmp://a.rtmp.youtube.com/live2/"
 URL_TWITCH = "rtmp://live.twitch.tv/app/"
 URL_FACEBOOK = "rtmp://live-api-s.facebook.com:443/rtmp/"
 
+# global variable is stream live
+g_isLive = False
+
 @app.route('/')
 @app.route('/home')
 def home():
@@ -41,7 +44,7 @@ def stream_page(settingIdx=None):
         # update database
         db.User.update_one( { "email": email }, {"$set": {"streamSetting": user['streamSetting']}})
         
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 @app.route('/new-setting', methods=["GET", "POST"])
 def createNewSetting():
@@ -54,7 +57,7 @@ def createNewSetting():
         user['streamSetting'].insert(numSettings, {'name': title, 'active': False, 'streamingPlatforms':[]})
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 @app.route('/edit-setting', methods=["GET", "POST"])
 def editSetting():
@@ -70,7 +73,7 @@ def editSetting():
         
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
     
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 @app.route('/new-target', methods=["GET", "POST"])
 def createTarget():
@@ -94,7 +97,7 @@ def createTarget():
 
         if url == "":
             print("Error in URL")
-            return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
         for setting in user['streamSetting']:
             if setting['name'] == streamTitle:
@@ -103,7 +106,7 @@ def createTarget():
 
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 @app.route('/edit-target', methods=["GET", "POST"])
 def editTarget():
@@ -127,7 +130,7 @@ def editTarget():
             url = URL_FACEBOOK
 
         if url == "":
-            return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
         for setting in user['streamSetting']:
             if setting['name'] == streamTitle:
@@ -140,8 +143,17 @@ def editTarget():
 
         db.User.update_one( {"email": email}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])))
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
+@app.route('/stream/live', methods=["GET", "POST"])
+def goLive():
+    g_isLive = True
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+
+@app.route('/stream/offline', methods=["GET", "POST"])
+def goOffiine():
+    g_isLive = False
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 if __name__ == '__main__':
     app.run()
