@@ -8,6 +8,4 @@ __pycache__/
 venv/
 .venv/
 .idea/
-
-# ignore ngrok 
-ngrok.exe
+*.exe
