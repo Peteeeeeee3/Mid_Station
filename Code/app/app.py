@@ -284,7 +284,7 @@ def logout():
     global g_isLive
 
     if g_isLive:
-        goOffiine()
+        goOffline()
 
     session.clear()
     g_user = None

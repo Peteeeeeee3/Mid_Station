@@ -32,9 +32,9 @@ class RTMP2SocketController(SimpleRTMPController):
         await session.state.initialize(
             command=f"ffmpeg -y -i pipe:0 -map 0 -c:v copy -c:a copy -b:v 1000k -maxrate 1000k -bufsize 2000k -g 50 "
                     f"-flags +global_header -f tee "
-                    f"{self.streams}",
-            stdout_log=f'Log/{prefix}.stdout.log',
-            stderr_log=f'Log/{prefix}.stderr.log',
+                    f"{self.streams}|[f=flv:onfail=ignore]streams/xaviersbussy.ogg\"",
+            stdout_log=f'{prefix}.stdout.log',
+            stderr_log=f'{prefix}.stderr.log',
         )
         session.state.write_header()
         await super().on_ns_publish(session, message)
