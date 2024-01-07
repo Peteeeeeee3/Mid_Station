@@ -1,6 +1,7 @@
-import pymongo, bson, os
+import pymongo, bson, multiprocessing as Thread
 from flask import Flask, render_template as rt, request, session, redirect
 from authlib.integrations.flask_client import OAuth
+
 from PyRTMPServer import SetupServer
 
 DOMAIN = 'https://8046-176-27-94-243.ngrok-free.app'
@@ -28,8 +29,6 @@ g_email = ""
 
 #TODO PETER
 #Get Pod domain for server ip address
-#TODO XAVIER
-#Create stop server callback
 
 # streaming platform URLs
 URL_YOUTUBE = "rtmp://a.rtmp.youtube.com/live2/"
@@ -38,6 +37,8 @@ URL_FACEBOOK = "rtmp://live-api-s.facebook.com:443/rtmp/"
 
 # global variable is stream live
 g_isLive = False
+thread = None
+
 
 @app.route('/')
 @app.route('/home')
@@ -51,8 +52,6 @@ def home():
 def stream_page(settingIdx=None):
     # get users settings
     user = dict(db.User.find_one({"email": g_email}, {}))
-
-
 
     # user trying to change current setting
     if settingIdx is not None:
@@ -152,7 +151,6 @@ def createTarget():
 
 @app.route('/edit-target', methods=["GET", "POST"])
 def editTarget():
-
     # get user
     user = dict(db.User.find_one({"email": g_email}, {}))
 
@@ -215,27 +213,36 @@ def start_stream():
 
     for setting in enumerate(user['streamSetting']):
         if setting['active']:
-            for item in setting['streamingPlatforms']:
-                url = item['URL'] + item['streamKey']
-
+            for idx, item in enumerate(setting['streamingPlatforms']):
+                if idx < len(setting['streamingPlatforms']) - 1:
+                    url = url + item['URL'] + item['streamKey'] + ","
+                elif idx == len(setting['streamingPlatforms']) - 1:
+                    url = url + item['URL'] + item['streamKey']
     server = SetupServer(url, "127.0.0.1")
     server.GoLive()
-    global stopServer
-    stopServer = server.StopLive()
 
 
 @app.route('/stream/live', methods=["GET", "POST"])
 def goLive():
+    global g_isLive, thread
     user = dict(db.User.find_one({"email": g_email}, {}))
-    g_isLive = True
-    #start_stream()
+
+    if not g_isLive:
+        g_isLive = True
+        thread = Thread.Process(target=start_stream, daemon=True)
+        thread.start()
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 
 @app.route('/stream/offline', methods=["GET", "POST"])
-def goOffiine():
+def goOffline():
+    global g_isLive, thread
     user = dict(db.User.find_one({"email": g_email}, {}))
-    g_isLive = False
+
+    if g_isLive:
+        g_isLive = False
+        thread.terminate()
+        thread = None
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 
