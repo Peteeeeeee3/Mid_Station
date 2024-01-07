@@ -1,4 +1,4 @@
-import pymongo, bson, multiprocessing as Thread
+import pymongo, bson, multiprocessing as Thread, os
 from flask import Flask, render_template as rt, request, session, redirect
 from authlib.integrations.flask_client import OAuth
 from kubernetes import client, config
@@ -10,13 +10,6 @@ DOMAIN_NO_HTTPS = '8046-176-27-94-243.ngrok-free.app'
 app = Flask(__name__)
 app.secret_key = "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"
 oauth = OAuth(app)
-
-v1 = client.CoreV1Api()
-print("Listing pods with their IPs:")
-ret = v1.list_pod_for_all_namespaces(watch=False)
-for i in ret.items:
-    print("%s\t%s\t%s" %
-          (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
 
 #Register google outh
 google = oauth.register(
@@ -226,7 +219,7 @@ def start_stream(email):
                     url = url + item['URL'] + item['streamKey'] + ","
                 elif idx == len(setting['streamingPlatforms']) - 1:
                     url = url + item['URL'] + item['streamKey']
-    server = SetupServer(url, '127.0.0.1')
+    server = SetupServer(url, os.environ.POD_ID)
     server.GoLive()
 
 
