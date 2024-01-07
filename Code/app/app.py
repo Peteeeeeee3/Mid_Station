@@ -5,6 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from PyRTMPServer import SetupServer
 
 DOMAIN = 'https://8046-176-27-94-243.ngrok-free.app'
+DOMAIN_NO_HTTPS = '8046-176-27-94-243.ngrok-free.app'
 
 app = Flask(__name__)
 app.secret_key = "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"
@@ -207,18 +208,18 @@ def deleteTarget(settingIdx, targetId):
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
 
-def start_stream():
+def start_stream(email):
     url = ""
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": email}, {}))
 
-    for setting in enumerate(user['streamSetting']):
+    for setting in user['streamSetting']:
         if setting['active']:
             for idx, item in enumerate(setting['streamingPlatforms']):
                 if idx < len(setting['streamingPlatforms']) - 1:
                     url = url + item['URL'] + item['streamKey'] + ","
                 elif idx == len(setting['streamingPlatforms']) - 1:
                     url = url + item['URL'] + item['streamKey']
-    server = SetupServer(url, "127.0.0.1")
+    server = SetupServer(url, '127.0.0.1')
     server.GoLive()
 
 
@@ -229,7 +230,7 @@ def goLive():
 
     if not g_isLive:
         g_isLive = True
-        thread = Thread.Process(target=start_stream, daemon=True)
+        thread = Thread.Process(target=start_stream, args=(g_email,), daemon=True)
         thread.start()
     return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
 
