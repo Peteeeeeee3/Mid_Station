@@ -1,5 +1,5 @@
 import pymongo, bson, multiprocessing as Thread
-from flask import Flask, render_template as rt, request, session, redirect
+from flask import Flask, render_template as rt, request, session, redirect, client
 from authlib.integrations.flask_client import OAuth
 
 from PyRTMPServer import SetupServer
@@ -10,6 +10,13 @@ DOMAIN_NO_HTTPS = '8046-176-27-94-243.ngrok-free.app'
 app = Flask(__name__)
 app.secret_key = "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"
 oauth = OAuth(app)
+
+v1 = client.CoreV1Api()
+print("Listing pods with their IPs:")
+ret = v1.list_pod_for_all_namespaces(watch=False)
+for i in ret.items:
+    print("%s\t%s\t%s" %
+          (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
 
 #Register google outh
 google = oauth.register(
