@@ -6,15 +6,18 @@ from PyRTMPHelper import SimpleServer
 
 
 def _setupStreams(streams: str) -> str:
-    urls = streams.split(',')
-    i = 1
     ffmpeg = ""
-    for url in urls:
-        if i == 1:
-            ffmpeg = ffmpeg + "\"" + "[f=flv:onfail=ignore]" + url + "|"
-        elif i <= len(urls):
-            ffmpeg = ffmpeg + "[f=flv:onfail=ignore]" + url + "|"
-        i = i + 1
+    if streams.find(','):
+        urls = streams.split(',')
+        i = 1
+        for url in urls:
+            if i == 1:
+                ffmpeg = ffmpeg + "\"" + "[f=flv:onfail=ignore]" + url + "|"
+            elif i <= len(urls):
+                ffmpeg = ffmpeg + "[f=flv:onfail=ignore]" + url + "|"
+            i = i + 1
+    else:
+        ffmpeg = ffmpeg + "\"" + "[f=flv:onfail=ignore]" + streams + "|"
     return ffmpeg
 
 

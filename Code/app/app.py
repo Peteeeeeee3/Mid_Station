@@ -211,7 +211,7 @@ def start_stream():
     url = ""
     user = dict(db.User.find_one({"email": g_email}, {}))
 
-    for setting in enumerate(user['streamSetting']):
+    for setting in user['streamSetting']:
         if setting['active']:
             for idx, item in enumerate(setting['streamingPlatforms']):
                 if idx < len(setting['streamingPlatforms']) - 1:
