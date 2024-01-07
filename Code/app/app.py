@@ -4,8 +4,8 @@ from authlib.integrations.flask_client import OAuth
 from kubernetes import client, config
 from PyRTMPServer import SetupServer
 
-DOMAIN = 'https://8046-176-27-94-243.ngrok-free.app'
-DOMAIN_NO_HTTPS = '8046-176-27-94-243.ngrok-free.app'
+DOMAIN = 'https://3e93-176-27-94-243.ngrok-free.app'
+DOMAIN_NO_HTTPS = '3e93-176-27-94-243.ngrok-free.app'
 
 app = Flask(__name__)
 app.secret_key = "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"
@@ -219,7 +219,7 @@ def start_stream(email):
                     url = url + item['URL'] + item['streamKey'] + ","
                 elif idx == len(setting['streamingPlatforms']) - 1:
                     url = url + item['URL'] + item['streamKey']
-    server = SetupServer(url, os.environ.POD_ID)
+    server = SetupServer(url, '0.0.0.0')
     server.GoLive()
 
 
