@@ -1,6 +1,7 @@
 import pymongo, bson, multiprocessing as Thread
 from flask import Flask, render_template as rt, request, session, redirect
 from authlib.integrations.flask_client import OAuth
+from kubernetes import client, config
 
 from PyRTMPServer import SetupServer
 
@@ -21,6 +22,11 @@ google = oauth.register(
     'scope': 'openid email profile'
   }
 )
+
+# config.load_kube_config()
+# api = client.CoreV1Api()
+# service = api.read_namespaced_service(name="kubernetes", namespace="default")
+# print(service.spec.cluster_ip)
 
 db_client = pymongo.MongoClient("mongodb+srv://PeterFarkas:tEiOltcXCGih8y7U@midstationdb0.8jpo7hd.mongodb.net/?retryWrites=true&w=majority")
 db = db_client['mid-station']
