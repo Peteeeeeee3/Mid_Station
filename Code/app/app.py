@@ -1,7 +1,7 @@
 import pymongo, bson, multiprocessing as Thread
-from flask import Flask, render_template as rt, request, session, redirect, client
+from flask import Flask, render_template as rt, request, session, redirect
 from authlib.integrations.flask_client import OAuth
-
+from kubernetes import client, config
 from PyRTMPServer import SetupServer
 
 DOMAIN = 'https://8046-176-27-94-243.ngrok-free.app'
