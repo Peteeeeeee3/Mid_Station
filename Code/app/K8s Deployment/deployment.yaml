@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mid-station-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mid-station-app
+  template:
+    metadata:
+      labels:
+        app: mid-station-app
+    spec:
+      containers:
+      - name: mid-station-container
+        image: xaviermurrow/app-server:latest
+        ports:
+        - containerPort: 80  # HTTP
+        - containerPort: 5000  # app
+        - containerPort: 1935  # rtmp server
