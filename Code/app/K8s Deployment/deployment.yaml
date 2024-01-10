@@ -16,6 +16,6 @@ spec:
       - name: mid-station-container
         image: xaviermurrow/app-server:latest
         ports:
-        - containerPort: 80  # HTTP
-        - containerPort: 5000  # app
-        - containerPort: 1935  # rtmp server
+        - containerPort: 80 
+        - containerPort: 5000 
+        - containerPort: 1935 
