@@ -41,13 +41,8 @@
 
           <!-- Video Preview -->
           <video width="640" height="480" preload="none" loop>
-            <source src="streams/xaviersbussy.ogg" type="video/ogg">
+            <source src="{{ url_for('static', filename= 'html-preview.ogg') }}" type="video/ogg">
           </video>
-
-          {% if previewLive != None and previewLive %}
-          {% endif %}
-          <!-- <img class="w-100 rounded mb-3" src="https://ftw.usatoday.com/wp-content/uploads/sites/90/2021/10/tyler-ninja-blevins.jpg" alt="">#} -->
-
           
           <div class="d-flex justify-content-between">
             <div>
@@ -65,6 +60,10 @@
               {% endif %}
 
               <p>Displaying incoming video feed above</p>
+              <p>Please stream to the following using OBS:
+                  - URL: rtmp://mid-station.com:1935/
+                  - Stream Key: {{streamKey}} (This key changes every time you log in. You can reuse old stream keys.)
+              </p>
             </div>
 
             <div class="flex-shrink-0 flex-grow-0">
