@@ -1,11 +1,11 @@
 import pymongo, bson, multiprocessing as Thread, string, random
 from flask import Flask, render_template as rt, request, session, redirect
 from authlib.integrations.flask_client import OAuth
-from kubernetes import client, config
 from PyRTMPServer import SetupServer
 
 DOMAIN = 'http://mid-station.com'
 DOMAIN_NO_HTTPS = 'mid-station.com'
+STREAM_PAGE_URL_ADDON = '/stream'
 
 app = Flask(__name__)
 app.secret_key = "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"
@@ -54,7 +54,7 @@ def home():
 @app.route('/stream/<int:settingIdx>')
 def stream_page(settingIdx=None):
     # get users settings
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     # user trying to change current setting
     if settingIdx is not None:
@@ -70,30 +70,29 @@ def stream_page(settingIdx=None):
                     setting['active'] = True
 
         # update database
-        db.User.update_one( { "email": g_email }, {"$set": {"streamSetting": user['streamSetting']}})
+        db.User.update_one( { "email": session['email'] }, {"$set": {"streamSetting": user['streamSetting']}})
         
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/new-setting', methods=["GET", "POST"])
 def createNewSetting():
     # get user
-    print("email: " + g_email)
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if request.method == "POST":
         title = request.form['stream-title']
         numSettings = len(user['streamSetting'])
         user['streamSetting'].insert(numSettings, {'name': title, 'active': False, 'streamingPlatforms':[]})
-        db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+        db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/edit-setting', methods=["GET", "POST"])
 def editSetting():
     # get user
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if request.method == "POST":
         oldTitle = request.form['stream-title-old']
@@ -103,25 +102,25 @@ def editSetting():
                 setting['name'] = title
                 break
         
-        db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+        db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
     
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/delete-setting/<int:settingIdx>')
 def deleteSetting(settingIdx):
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
     
     del user['streamSetting'][settingIdx]     
-    db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+    db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/new-target', methods=["GET", "POST"])
 def createTarget():
     # get user
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if request.method == "POST":
         streamTitle = request.form['stream-title']
@@ -139,7 +138,7 @@ def createTarget():
 
         if url == "":
             print("Error in URL")
-            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive)
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'])
 
         for setting in user['streamSetting']:
             if setting['name'] == streamTitle:
@@ -147,15 +146,15 @@ def createTarget():
                 setting['streamingPlatforms'].insert(numTargets, {'_id': bson.ObjectId(), 'platform': platform, 'URL': url, 'streamKey': streamKey, 'title': title})
                 break
 
-        db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+        db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streanKey'])
 
 
 @app.route('/edit-target', methods=["GET", "POST"])
 def editTarget():
     # get user
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if request.method == "POST":
         streamTitle = request.form['stream-title']
@@ -173,7 +172,8 @@ def editTarget():
             url = URL_FACEBOOK
 
         if url == "":
-            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+            redirect(DOMAIN + STREAM_PAGE_URL_ADDON)
+            return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
         for setting in user['streamSetting']:
             if setting['name'] == streamTitle:
@@ -185,14 +185,14 @@ def editTarget():
                         target['title'] = title
                         break
 
-        db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+        db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/delete-target/<int:settingIdx>/<targetId>')
 def deleteTarget(settingIdx, targetId):
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
     idx = None
     for i, target in enumerate(user['streamSetting'][settingIdx]['streamingPlatforms']):
         if target['_id'] == bson.ObjectId(targetId):
@@ -202,12 +202,12 @@ def deleteTarget(settingIdx, targetId):
     
     if idx == None:
         print("Target Index Error " + targetId)
-        return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+        return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
     
     del user['streamSetting'][settingIdx]['streamingPlatforms'][idx]      
-    db.User.update_one( {"email": g_email}, {"$set": {"streamSetting": user['streamSetting']}})
+    db.User.update_one( {"email": session['email']}, {"$set": {"streamSetting": user['streamSetting']}})
 
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 def start_stream(email):
@@ -228,26 +228,28 @@ def start_stream(email):
 @app.route('/stream/live', methods=["GET", "POST"])
 def goLive():
     global g_isLive, thread
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if not g_isLive:
         g_isLive = True
-        thread = Thread.Process(target=start_stream, args=(g_email,), daemon=True)
+        thread = Thread.Process(target=start_stream, args=(session['email'],), daemon=True)
         thread.start()
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/stream/offline', methods=["GET", "POST"])
 def goOffline():
     global g_isLive, thread
-    user = dict(db.User.find_one({"email": g_email}, {}))
+    user = dict(db.User.find_one({"email": session['email']}, {}))
 
     if g_isLive:
         g_isLive = False
+        session['isLive'] = False
         thread.terminate()
         thread = None
-    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
 
+    return rt('stream.html', settings=list(enumerate(user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 @app.route('/login')
 def googleLogin():
@@ -262,7 +264,7 @@ def authorize():
     global g_user
 
     token = oauth.google.authorize_access_token()
-    session["user"] = token
+    session['userToken'] = token
     google_user = token['userinfo']
     g_email = google_user['email']
     print("login email: " + g_email)
@@ -277,7 +279,11 @@ def authorize():
     else:
         g_user = dict(g_user)
 
-    return rt('stream.html', settings=list(enumerate(g_user['streamSetting'])), isLive=g_isLive, streamKey=g_streamKey)
+    session['email'] = g_email
+    session['isLive'] = g_isLive
+    session['streamKey'] = g_streamKey
+
+    return rt('stream.html', settings=list(enumerate(g_user['streamSetting'])), isLive=session['isLive'], streamKey=session['streamKey'])
 
 
 @app.route('/logout')
@@ -286,12 +292,13 @@ def logout():
     global g_email
     global g_isLive
 
-    if g_isLive:
+    if session['isLive']:
         goOffline()
 
     session.clear()
     g_user = None
     g_email = None
+    g_isLive = False
     return redirect(DOMAIN)
 
 
