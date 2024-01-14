@@ -1,8 +1,8 @@
-For EC branch on GitHub, refer to: EC-main (
+For EC branch on GitHub, refer to: "EC-main"
 Main was left untouched since last submission
 
 In this project we came across an issue in our testing that left correctly scaling the RTMP Server not feasible.
-The issue is that even with each RTMP server on a separate thread in a map, since they are serving the same location,
+The issue is that even with each RTMP server on a separate thread in a map, since they are serving the same location, i.e.
 0.0.0.0:1935, we needed to implement dynamic port allocation. To give each RTMP server a specific service, which would
 all require a "rolling" ingress. By this we mean an ingress that paths a user specific RTMP URL for the user to their
 specific RTMP Server service. This ingress would link each port to a path, for example, 'mid-station.com/user1', which
@@ -11,7 +11,7 @@ would link to an internal port such as 8080.
 That said. We were able to get two RTMP servers running at the same time, it just so happened we were of course on two
 separate pods. Issues did occur, we streamed from OBS to each others RTMP Server. This makes sense as each server is
 aimlessly accepting data entry from port 1935, there is no targeting for the correct RTMP server, which can be done
-explained above.
+with dynamic port allocation.
 
 Additionally, we aimed and have left code that indicates an attempt at having a HTML5 live preview of the live stream.
 The issue with this unfortunately was that we could only get the MP4 file format to actually display video, but this
