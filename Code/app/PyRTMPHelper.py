@@ -30,9 +30,9 @@ class RTMP2SocketController(SimpleRTMPController):
         session.state = RemoteProcessFLVWriter()
         logger.debug(f'output to {prefix}.flv')
         await session.state.initialize(
-            command=f"ffmpeg -y -i pipe:0 -map 0 -c:v copy -c:a copy -b:v 1000k -maxrate 1000k -bufsize 2000k -g 50 "
+            command=f"ffmpeg -y -i pipe:0 -map 0 -c:v libx264 -c:a aac -b:v 1000k -maxrate 1000k -bufsize 2000k -g 50 "
                     f"-flags +global_header -f tee "
-                    f"{self.streams}[f=flv:onfail=ignore]streams/xaviersbussy.ogg\"",
+                    f"{self.streams}static/html-preview.mkv\"",
             stdout_log=f'{prefix}.stdout.log',
             stderr_log=f'{prefix}.stderr.log',
         )

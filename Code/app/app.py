@@ -33,9 +33,6 @@ db = db_client['mid-station']
 g_user = None
 g_email = ""
 
-#TODO PETER
-#Get Pod domain for server ip address
-
 # streaming platform URLs
 URL_YOUTUBE = "rtmp://a.rtmp.youtube.com/live2/"
 URL_TWITCH = "rtmp://live.twitch.tv/app/"
@@ -266,7 +263,7 @@ def authorize():
 
     token = oauth.google.authorize_access_token()
     session["user"] = token
-    google_user = token['userinfo'] 
+    google_user = token['userinfo']
     g_email = google_user['email']
     print("login email: " + g_email)
     g_user = db.User.find_one({"email": g_email}, {})
@@ -299,4 +296,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=80)

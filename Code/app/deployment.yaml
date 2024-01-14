@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: xaviermurrow/mid-station-image:latest
+        ports:
+        - containerPort: 5000
+        - containerPort: 1935
+        env:
+        - name: PORT
+          value: "5000"
+        - name: RTMP_PORT
+          value: "1935"
