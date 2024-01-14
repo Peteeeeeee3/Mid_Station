@@ -23,9 +23,10 @@ def _setupStreams(streams: str) -> str:
 
 class SetupServer:
 
-    def __init__(self, streamsURLs: str, ipAddress: str):
+    def __init__(self, streamsURLs: str, ipAddress: str, port: int):
         self.streams = _setupStreams(streamsURLs)
         self.ipaddress = ipAddress
+        self.port = port
         self.server = self._createServer()
 
     def _createServer(self) -> SimpleServer:
@@ -33,7 +34,7 @@ class SetupServer:
         return server
 
     async def _startServer(self):
-        await self.server.create(self.ipaddress, port=1935)
+        await self.server.create(self.ipaddress, port=self.port)
         await self.server.start()
         await self.server.wait_closed()
 
